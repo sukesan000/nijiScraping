@@ -31,33 +31,30 @@ public class NijidbService {
     //検索実行
     ChannelListResponse channelsResponse;
 
-    public List<Channel> getChannelInfo(List<Member> chId_list) throws IOException {
+    public List<Channel> getChannelInfo(List<Member> memberList) throws IOException {
         YouTube youtube = new YouTube.Builder(HTTP_TRANSPORT, JSON_FACTORY, new HttpRequestInitializer() {
             public void initialize(HttpRequest request) throws IOException {
             }
         }).setApplicationName("youtube-cmdline-search-sample").build();
 
         List<Channel> channelsList = new ArrayList<>();
+        try{
+            for (Member member : memberList) {
+                String chId = member.getChannel_id();
+                YouTube.Channels.List channelInfo = youtube.channels().list(Arrays.asList("id,snippet,statistics"));
+                channelInfo.setKey(key);
+                channelInfo.setId(Arrays.asList(chId));
 
-        for (Member member : chId_list) {
-            String chId = member.getChannel_id();
-            YouTube.Channels.List channelInfo = youtube.channels().list(Arrays.asList("id,snippet,statistics"));
-            channelInfo.setKey(key);
-            channelInfo.setId(Arrays.asList(chId));
-
-            channelsResponse = channelInfo.execute();
-            Channel channel = channelsResponse.getItems().get(0);
-            channelsList.add(channel);
+                //API実行
+                channelsResponse = channelInfo.execute();
+                Channel channel = channelsResponse.getItems().get(0);
+                channelsList.add(channel);
+            }
+        }catch (Exception e){
+            System.out.println("youtube上の情報取得に失敗しました。: " + e);
         }
+
         return channelsList;
-    }
-
-    public List<Member> getAllChannelId(){
-        return nijidbRepository.getALLChannelId();
-    }
-
-    public List<Member> findMember(String kewword){
-        return nijidbRepository.findMember(kewword);
     }
 
     public void saveChannelInfo(List<Channel> channelInfoList, List<Member> memberList){
@@ -92,23 +89,13 @@ public class NijidbService {
                 memberList.get(i).setThumbnail(thumbnail);
                 memberList.get(i).setPublished_at(publishedAt_);
                 memberList.get(i).setChannel_link(channelLink);
-
-                nijidbRepository.updateOne(memberList.get(i).getSubscriber(),
-                        memberList.get(i).getVideo_count(),
-                        memberList.get(i).getThumbnail(),
-                        memberList.get(i).getChannel_id(),
-                        memberList.get(i).getPublished_at(),
-                        memberList.get(i).getChannel_link());
+                i++;
             }
-            i++;
         }
+        saveData(memberList);
     }
 
-    public List<Member >getAllMemberInfo(){
-        return nijidbRepository.getALLChannelInfo();
-    }
-
-    public void saveData(String id,String name,String channelLink){
-        nijidbRepository.insertOne(id,name,channelLink);
+    public void saveData(List<Member> Members){
+        nijidbRepository.saveAll(Members);
     }
 }

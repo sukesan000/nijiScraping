@@ -24,35 +24,25 @@ public class Scraping{
         Document document = Jsoup.connect("https://refined-itsukara-link.neet.love/livers").get();
         List<Member> memberList = new ArrayList<>();
 
+        //全ライバーのURLと名前の取得
         Elements hrefs = document.select("a[href*=YouTube]");
-        int idNum = 0;
+        Elements names = document.select("div.grow.order-2 > p.text-base.ease-out");
+
+        int idNum = 1;
+        int namesNum = 0;
         for (Element element: hrefs){
             Member member = new Member();
             String href = element.attr("href");
             member.setChannel_id(href.substring(32));
             member.setId(idNum);
             member.setChannel_link(href);
+            member.setName(names.get(namesNum).text());
             memberList.add(member);
             idNum++;
+            namesNum++;
         }
 
-        int num = 0;
-        Elements names = document.select("div.flex-grow > p.ease-out");
-        for (Element element: names){
-            Member member = memberList.get(num);
-            String name = element.text();
-            member.setName(name);
-            num++;
-        }
-
-        //名前とidとチャンネルURLをDBにセット
-        for(Member member: memberList){
-            String id = member.getChannel_id();
-            String name = member.getName();
-            String channelLink = member.getChannel_link();
-            njService.saveData(id, name, channelLink);
-        }
-
+        //youtubeの情報を保存
         List<Channel> channelInfoList = njService.getChannelInfo(memberList);
         njService.saveChannelInfo(channelInfoList, memberList);
         logger.info("スクレイピングを終了します");

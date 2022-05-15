@@ -7,11 +7,11 @@ import java.util.Date;
 
 @Data
 @Entity
-@Table(name="nijiDB")
+@Table(name="member")
 public class Member {
     @Id
     @Column(name="id")
-    @GeneratedValue(strategy=GenerationType.SEQUENCE)
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
     private int id;
 
     @Column(name="name")
